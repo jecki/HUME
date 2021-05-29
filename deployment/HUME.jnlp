@@ -1,0 +1,33 @@
+
+<?xml version="1.0" encoding="utf-8"?>
+<jnlp spec="1.0+"
+    codebase="http://www.eckhartarnold.de/secrets/hume"
+    href="HUME.jnlp">
+    <information>
+        <title>HUME 1.0 java implementation</title>
+        <vendor>eckhartarnold.de</vendor>
+        <homepage href="http://www.eckhartarnold.de" />
+        <description>The java implementaion of the HUME 1.0 Model in the EMIL Project.</description>
+    </information>
+
+    <security>
+        <all-permissions />
+    </security>
+
+    <resources>
+        <j2se version="1.6+" />
+        <jar href="HUME.jar" />
+    </resources>
+
+    <resources>
+        <jar href="jmatharray.jar" />
+    </resources>        
+    <resources>
+        <jar href="jmathio.jar" />
+    </resources>        
+    <resources>        
+        <jar href="jmathplot.jar" />
+    </resources>
+    
+    <application-desc main-class="hume.Simulation" />
+</jnlp>

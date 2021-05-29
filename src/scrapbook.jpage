@@ -1,0 +1,1 @@
+int[] x = new int[0]; (No explicit return value)

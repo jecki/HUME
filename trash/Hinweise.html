@@ -1,0 +1,109 @@
+<h1>Zur Programmarchitektur von HUME 1.0</h1>
+
+
+<h2>Grundüberlegungen</h2>
+
+<p>Die Programm besteht aus unterschiedlichen Komponenten, die jeweils einen
+bestimmten Aspekt der Simulation realisieren, die Komponenten sind:</p>
+<ol>
+<li>die Agenten</li>, 
+<li>das Basisspiel (in diesem Fall ein Vertrauensspiel)</li> 
+<li>die Netzwerkstruktur und das Szenario (PM oder GD)</li>
+<li>das Matching der Agenten</li>
+<li>der Lernalgorithmus</li>
+<li>der Reputationsmechanismus</li>
+<li>die Simulationssteuerung</li>
+<li>weitere Komponenten für die Ein- und Ausgabe, Reportgenerierung, Logging etc.</li>
+</ol>
+
+<p>Jede dieser Komponenten wird durch mindestens eine Java-Klasse realisiert. Wenn für
+eine Komponente mehrere Varianten in Frage kommen (z.B. verschiedene Lern- oder 
+Matchingalgorithmen oder unterschiedliche Netzwerkstrukturen), dann wird die
+Komponente durch eine abstrakte Basisklasse beschrieben (eine alternative 
+Architekturentscheidung wäre die Verwendung von Java-Interfaces gewesen) und die
+einzelnen Varianten der Komponente als abgeleitete Klassen dieser Basis-Klasse realisiert.
+Auf diese Weise ergibt sich so etwas wie eine "pluggable architecture" um verschiedene
+Simulationsvarianten auszuprobieren und zu kombinieren.</p>
+
+
+<h2>Bisheriger Stand (20.12.2007)</h2> 
+
+<p><b>(mehr oder weniger) vollständig</b>:</p>
+<ol>
+<li>Die Implementation des Spiels (Klasse: TrustGame)</li>
+<li>Teile der Netzwerkstruktur (Klassen: Network und PartitionNetwork)</li>
+<li>Teile des Matching (Klassen: Matching und DoubleSidedMatching)</li>
+<li>Die Hilfsklasse RND, die den Zufallszahlengenerator kapselt (s.u.).</li>
+</ol>
+
+<p><b>vorhanden, aber unvolständig</b>:</p>
+<ol>
+<li>Implementation der Agenten (Klasse: Agent)</li>
+<li>Das Steuerprogramm der Simulation (Klasse: Simulation)</li>
+</ol>
+
+<p><b>noch nich berücksichtigt</b>:</p>
+<ol>
+<li>Unterschiedliche Szenarien: Partition Market, Grid Based</li>
+<li>Lernalgorithmen</li>
+<li>Reputationsmechanisus</li>
+<li>Alternative Matching-Algorithmen (z.B. einseitiges Matching)</li>
+<li>Alternative Netzwerkstrukturen (was immer das Herz beliebt...)</li>
+</ol>
+
+
+<h2>Test und Fehlerfreiheit</h2>
+<p>Zum Testen der Software auf programmtechnische Fehlerfreiheit werden durchgängig 
+"unit-tests" eingesetzt. Dabei handelt es sich um automatisierte Tests, die jede Methode
+jeder Klasse durch ausprobieren (Aufruf mit bestimmten, möglichst kritischen Parametern und 
+Überprüfung der Rückgabewerte) auf Fehlerfreiheit hin untersuchen. Ein "Bug", der nicht 
+durch einen Test erkannt wird, sollte als Fehler des Tests aufgefasst werden, d.h.
+der "Test case" sollte durch Programmcode ergänzt werden, der genau diesen Bug in Zukunft
+provoziert, anschließend sollte der Bug in dem getesteten Code behoben werden.
+Wenn der Test dann fehlerfrei durchläuft, kann man davon ausgehen, dass der Bug behoben worden
+ist.</p>
+
+<p>Zum Testen neuer abgeleiteter Klassen (z.B. eines neuen Matching Algorithmus), sollten
+Instanzen der Abgeleiteten Klassen in dem Test Case der Basis Klasse berücksichtigt werden
+(alle Tests einer Basisklasse sind auch Tests jeder abgeleiteten Klasse). Weiterhin
+sollte ein eigener Testcase für die abgeleitete Klasse geschrieben werden, wobei nur die 
+zusätzlichen Eigenschaften bzw,. Methoden der abgeleiteten Klasse berücksichtigt werden
+müssen.</p>
+
+<p>Wird die Schnittstelle einer Klasse geändert, so müssen selbstverständlich auch die Tests 
+angepasst werden.</p>
+
+<p>Unit-Tests eignen sind ein Hilfsmittel zur Feststellung von Implementationsfehlern. Mit
+Hilfe von Unit-Tests kann man nicht feststellen, ob die verwendeten Algorithmen sinnvoll
+sind und über die erwünschten Charakteristika verfügen. Dazu werden Benchmark-Programme
+eingesetzt.</p>
+
+
+<h2>Benchmarks</h2>
+<p>Unter "Benchmarks" verstehe ich hier kleine Programme, die die Charakteristika der 
+verwendeten Algorithmen unabhängig von der Simulation selbst untersuchen. Sie sollen bei
+der Entscheidung helfen, welche Algorithmen in der Simulation überhaupt eingesetzt werden 
+sollten. Da diese "Benchmark"-Programme später nicht in die Simulation mit aufgenommen 
+werden bieten sich dafür Skriptsprachen (Python, Groovy, Ruby etc.) besonders an. 
+Einziges Beispiel ist bisher das Programm "BenchmarkDSMatching.py", das den 
+DoubleSidedMatching Algorithmus untersucht, indem es grafisch darstellt, wie gut die
+Erwartungen der Agenten (bezüglich des Einkommens und der Problemlösungsqualität) mit ihrem 
+späteren Erfolg übereinstimmen. Deckt sich beides mehr oder weniger, dann kann man davon
+ausgehen, dass die zugrundegelegte Schätzheuristik sinnvoll ist.</p>
+
+<p>"Benchmarks" sind von "Unittests" zu unterscheiden. Sie dienen nicht der Fehlersuche, und
+laufen auch nicht notwendigerweise automatisiert ab.</p>
+
+
+<h2>Ein- und Ausgabe, Monitoring, Logging etc.</h2>
+
+Diese Aspekte wurden bisher noch nicht berücksichtigt. Unter der Ein- und Ausgabe sind
+dabei die Dateneingabe (über eine grafische Oberfläche, oder zunänchst provisorisch durch
+eine Konfigurationsdatei oder hartkodiert im Programmcode) und die Ausgabe (grafisch bzw.
+als Report mit Text und Grafik im LaTeX, PDF oder HTML-Format) zu verstehen. Monitoring und
+Logging bezeichnen dagegen die mitlaufende Analysen der einzelnen Komponenten des 
+Simulationsverlaufes, die nicht unbedingt in das Gesamtergebnis eingehen (es sei denn
+es treten dabei auffällige Phänomene zu Tage). Inwieweit das Logging und Monitoring 
+systematisiert betreiben werden sollen, ist eine offene Frage. Empfehlenswert ist es vor
+allem dort, wo bestimmte Wirkungen bzw. Wechselwirkungen von Algorithmen nicht von 
+vornherein verstehbar sind. 

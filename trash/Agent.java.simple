@@ -1,0 +1,105 @@
+/**
+ *
+ */
+package hume;
+
+import java.util.Random;
+
+/**
+ * @author eckhart
+ *
+ */
+public strictfp class Agent {
+	/** Number of the agent. Agents are numbered starting from 0 onward. */
+	int ordN;
+
+	static int numCompetences;
+	static Network network;
+	static Random random;
+
+	protected double competences[];
+
+	protected double localTrustworthiness;
+	protected double marketTrustworthiness;
+
+	protected double searchRadius = 0.5;
+	protected double exploitRadius = 0.5;
+
+	/**
+	 *
+	 */
+	protected void normalizeCompetences() {
+		double sum = 0.0;
+		for (double f : competences) {
+			sum += f;
+		}
+		for (int i = 0; i < numCompetences; i++) competences[i] /= sum;
+	}
+
+    /**
+     *
+     * @param problem
+     */
+	protected void acquireCompetence(int problem) {
+		competences[problem] *= 2.0;
+		normalizeCompetences();
+	}
+
+	/**
+	 *
+	 * @param radius
+	 * @return
+	 */
+	protected double stepFunction(double distance, double radius) {
+		assert distance >= 0.0 && distance <= 1.0;
+		if (distance > radius) return marketTrustworthiness;
+		else return localTrustworthiness;
+	}
+
+	/**
+	 *
+	 */
+	public Agent() {
+		// TODO Auto-generated constructor stub
+	}
+
+	/**
+	 *
+	 * @param distance
+	 * @return
+	 */
+	public double exploitProbability(double distance) {
+		return stepFunction(distance, exploitRadius);
+	}
+
+//	public double tellCompetence(Agent other, int problem) {
+//		assert problem < numCompetences;
+//		return competences[problem];	// HUME 1.0: complete honesty
+//	}
+//
+//	public double investCompetence(Agent other, int problem) {
+//		assert problem < numCompetences;
+//		return competences[problem];	// HUME 1.0: complete reliability
+//	}
+
+	/**
+	 *
+	 * @param other
+	 * @param problem
+	 * @return
+	 */
+	public boolean trust(Agent other, int problem) {
+		assert problem < numCompetences;
+		
+
+	}
+
+	public boolean reward(Agent other, int problem) {
+		assert problem < numCompetences;
+		double p = exploitProbability(network.distance(this, other));
+		if (random.nextDouble() < p)
+			return false;
+		else
+			return true;
+	}
+}

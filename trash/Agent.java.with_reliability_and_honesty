@@ -1,0 +1,153 @@
+/**
+ *
+ */
+package hume;
+
+/**
+ * The <code>Agent</code> class defines the agent's properties and their
+ * behaviour.
+ *
+ * @author eckhart
+ */
+public strictfp class Agent {
+	/** Number of the agent. Agents are numbered starting from 0 onward. */
+	int ordN;
+	Simulation sim;
+
+	protected double competences[];
+
+	protected double localTrustworthiness;
+	protected double marketTrustworthiness;
+
+	protected double enterMarketProbability;
+
+	protected double searchRadius = 0.5;
+	protected double exploitRadius = 0.5;
+
+	/**
+	 * Normalizes the competences vector so that its components add up to
+	 * one.
+	 */
+	protected void normalizeCompetences() {
+		double sum = 0.0;
+		for (double f : competences) {
+			sum += f;
+		}
+		for (int i = 0; i < sim.numCompetences; i++) competences[i] /= sum;
+	}
+
+    /**
+     * Increases the competence for solving a certain problem at the expense
+     * of the competences for solving other problems. (Draft 28.11., p. 7)
+     *
+     * @param problem the problem for the solution of which the competence
+     * 		          shall be increased.
+     */
+	protected void acquireCompetence(int problem) {
+		competences[problem] += 0.1; 	// so far, delta is arbitrarily set to 0.1 !
+		normalizeCompetences();
+	}
+
+	/**
+	 * A step functions that determines whether to use the local
+	 * trustworthiness or the market trustworthiness depending on
+	 * the distance (towards another agent) and the neighborhood radius.
+	 *
+	 * @param distance
+	 * @param radius
+	 * @return the probability of being trustworthy
+	 */
+	protected double stepFunction(double distance, double radius) {
+		assert distance >= 0.0 && distance <= 1.0;
+		if (distance > radius) return marketTrustworthiness;
+		else return localTrustworthiness;
+	}
+
+	/**
+	 *
+	 */
+	public Agent(int agentNumber) {
+		assert sim.numCompetences > 0: "Field 'numCompetences' of class " +
+			"Simulation must be initialized before instantiating any Agent objects.";
+		ordN = agentNumber;
+		// TODO Auto-generated constructor stub
+	}
+
+	/**
+	 * Determines the exploit probability.
+	 * @param distance the network distance towards the other agent
+	 * @return the probability to exploit the other agent
+	 */
+	public double exploitProbability(double distance) {
+		return stepFunction(distance, exploitRadius);
+	}
+
+	/**
+	 * Returns the competence the agtent <em>claims</em> to have for solving the
+	 * a certain problem for a certain other agent.
+	 * @param other		the agent for whom the the problem is to be solved
+	 * @param problem   the problem that must be solved
+	 */
+	public double tellCompetence(Agent other, int problem) {
+		assert problem < sim.numCompetences;
+		return competences[problem];	// HUME 1.0: complete honesty
+	}
+
+	/**
+	 * Returns the competence the agtent <em>actually invests</em> when called
+	 * to solve a certain problem for a certain other agent.
+	 * @param other		the agent for whom the the problem is to be solved
+	 * @param problem   the problem that must be solved
+	 */
+	public double investCompetence(Agent other, int problem) {
+		assert problem < sim.numCompetences;
+		return competences[problem];	// HUME 1.0: complete reliability
+	}
+
+
+	/**
+	 *
+	 * @param other
+	 * @param problem
+	 * @return
+	 */
+	public void search(int problem) {
+		assert problem < sim.numCompetences;
+		Agent other;
+		if (sim.random.nextDouble() < enterMarketProbability)
+			other = sim.findLocalMatch(this, problem, searchRadius);
+		else other = sim.findMarketMatch(this, problem, searchRadius);
+
+		double expected = sim.tgReward(other.tellCompetence(this, problem));
+
+		// spätestens hier sollte der Agent entscheiden, ob er das Problem nicht
+		// lieber selbst löst
+
+		double payoff = other.reward(this, problem);
+		learnTrust(other, problem, expected, payoff);
+	}
+
+	public double reward(Agent other, int problem) {
+		assert problem < sim.numCompetences;
+		sim.occupied(this);  // this agent cannot solve another problem during this round
+		double p = exploitProbability(sim.network.distance(this, other));
+		if (sim.random.nextDouble() < p) {
+			learnReward(other, problem, sim.tgCheat(tellCompetence(other, problem)));
+			return sim.tgExploit(tellCompetence(other, problem));
+		} else {
+			double rw = sim.tgReward(investCompetence(other, problem));
+			learnReward(other, problem, rw);
+			return rw;
+		}
+	}
+
+
+	public void learnTrust(Agent other, int problem, double expectedPayoff,
+			double payoff) {
+
+	}
+
+	public void learnReward(Agent other, int problem, double payoff) {
+
+	}
+}

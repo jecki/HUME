@@ -1,0 +1,115 @@
+/**
+ * The simulation main class
+ */
+package hume;
+
+import hume.Network;
+
+import java.util.Random;
+import java.util.Set;
+
+/**
+ * The <code>Simulation<code/> runs and controls the whole simulation.
+ * It also contains all global simulation parameters.
+ *
+ * @author eckhart
+ *
+ */
+public strictfp class Simulation {
+
+	/** Then random number generator of this simulation. (usually: java.util.Random) */
+	Random random = new java.util.Random();
+	/** The interaction network. */
+	Network network;
+	/** An array of all agents. <em>read only!</em> */ 
+	Agent[] allAgents;	
+	
+
+	/** Ther upper limit for the number of problems (Draft 28.11, p.6). Other than
+	 * in the draft the problems are numbered from zero to numProblems-1. Starting to
+	 * count from zero simplifies indexing. */
+	int numCompetences = -1;
+
+	protected Set<Agent> remainingAgents;
+
+	/**
+	 * @param args
+	 */
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+
+	}
+
+	public Simulation() {
+		network = new PartitionNetwork(1000, 20, random);
+		allAgents = network.toArray();
+	}
+	
+	protected void newRound() {
+		remainingAgents = network.agents();
+	}
+
+	void occupied(Agent agent) {
+		remainingAgents.remove(agent);
+	}
+
+
+	protected Agent findMatch(Agent agent, int problem, double radius,
+			Set<Agent> pool) {
+		Agent match = null;
+		double competence = 0.0; // any competence is higher than that
+		double c2;
+		// Set<Agent> neighbors = network.neighbors(agent, radius);
+		pool.retainAll(remainingAgents);
+		for (Agent a : pool) {
+			if (a != agent) { // the agent itself is never its own match.
+				c2 = a.tellCompetence(agent, problem);
+				if (c2 > competence) {
+					competence = c2;
+					match = a;
+				}
+			}
+		}
+		return match;
+	}
+
+	Agent findLocalMatch(Agent agent, int problem, double radius) {
+		return findMatch(agent, problem, radius,
+				network.neighbors(agent, radius));
+	}
+
+	Agent findMarketMatch(Agent agent, int problem, double localRadius) {
+		return findMatch(agent, problem, localRadius,
+				network.strangers(agent, localRadius));
+	}
+
+	/**
+	 * Returns the payoff the exploited player receives.
+	 * @param competence the announced (or expected competence)
+	 *        of the s-agent
+	 */
+	double tgExploit(double competence) {
+		return -competence; // should be: a - s*competence
+	}
+
+	/**
+	 * Returns the payoff a cheater, i.e. an s-agent that does not reward
+	 * the trust of the p-agent, receives.
+	 * @param competence the announced competence of the s-agent
+	 */
+	double tgCheat(double competence) {
+		return competence; // should be: b+s*competence
+	}
+
+	/**
+	 * Returns the reward each agent receives if the trust of the p-agent
+	 * was "rewarded" by the s-agent. The reward is assumed to be the same
+	 * for both agents. Therefore, there is only one reward-method instead
+	 * of separate reward methods that return the reward of the p-agent
+	 * and the s-agent respectively.
+	 * @param competence the actually invested competence of the s-agent
+	 */
+	double tgReward(double competence) {
+		return competence/2.0; // should be: 1+s*competence
+	}
+}
